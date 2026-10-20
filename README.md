@@ -12,7 +12,7 @@ Unofficial NixOS packaging for [sgtaziz/lian-li-linux](https://github.com/sgtazi
 ### Quick install (just the binaries)
 
 ```sh
-nix profile add github:epwv/lian-li-linux-nix
+nix profile add github:owainxyz/lian-li-linux-nix
 ```
 
 Gets you `lianli-daemon` and `lianli-gui` on `PATH`. You still need the udev rules and the `evdi` kernel module for full hardware access, which only the NixOS module sets up.
@@ -22,7 +22,7 @@ Gets you `lianli-daemon` and `lianli-gui` on `PATH`. You still need the udev rul
 1. Clone this repo into your home directory:
 
    ```sh
-   git clone https://github.com/epwv/lian-li-linux-nix.git ~/lian-li-linux-nix
+   git clone https://github.com/owainxyz/lian-li-linux-nix.git ~/lian-li-linux-nix
    ```
 
 2. Import the module in `configuration.nix` with an absolute path. Nix doesn't care where the file lives:
