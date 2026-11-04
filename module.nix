@@ -1,36 +1,65 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  unstablePkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/refs/heads/nixos-unstable.tar.gz";
-    sha256 = "1vkilgbwjpyhjjyx1i75wcinqxgk5smy1gmqyvl41v262awl6jlv";
-  }) { system = pkgs.stdenv.hostPlatform.system; };
-
-  lianli-linux = unstablePkgs.callPackage ./lian-li-linux {
-    evdi = config.boot.kernelPackages.evdi;
-  };
+  cfg = config.services.lian-li-linux;
 in
 {
-  environment.systemPackages = [ lianli-linux ];
+  options.services.lian-li-linux = {
+    enable = lib.mkEnableOption "Lian Li Linux fan, RGB and LCD control";
 
-  services.udev.extraRules = lib.replaceStrings
-    [ "/bin/sh" "/bin/chmod" ]
-    [ "${pkgs.bash}/bin/sh" "${pkgs.coreutils}/bin/chmod" ]
-    (builtins.readFile ./lian-li-linux/99-lianli.rules);
+    package = lib.mkPackageOption pkgs "lian-li-linux" { };
 
-  boot.extraModulePackages = [ config.boot.kernelPackages.evdi ];
-  boot.kernelModules = [ "evdi" ];
-
-  systemd.user.services.lianli-daemon = {
-    description = "Lian Li Device Daemon";
-    after = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [ "default.target" ];
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = "${lianli-linux}/bin/lianli-daemon";
-      Restart = "on-failure";
-      RestartSec = 5;
+    serviceMode = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.enum [
+          "user"
+          "system"
+        ]
+      );
+      default = null;
+      description = ''
+        Daemon to start automatically. `user` runs it in the graphical session,
+        `system` runs it at boot as the `lianli` account. `null` leaves both
+        stopped so the mode can be chosen from the GUI.
+      '';
     };
+
+    evdi.enable = lib.mkEnableOption "the EVDI kernel module for desktop-mode LCD panels";
+  };
+
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ cfg.package ];
+
+    services.udev.packages = [ cfg.package ];
+    systemd.packages = [ cfg.package ];
+    systemd.tmpfiles.packages = [ cfg.package ];
+
+    security.polkit.enable = true;
+    environment.etc."polkit-1/rules.d/49-lianli-recovery.rules".source =
+      "${cfg.package}/share/polkit-1/rules.d/49-lianli-recovery.rules";
+
+    users.users.lianli = {
+      isSystemUser = true;
+      group = "lianli";
+      description = "Lian Li Linux daemon";
+    };
+    users.groups.lianli = { };
+
+    systemd.services.lianli-control-recovery.wantedBy = [ "multi-user.target" ];
+    systemd.services.lianli-daemon-system.wantedBy = lib.mkIf (cfg.serviceMode == "system") [
+      "multi-user.target"
+    ];
+    systemd.user.services.lianli-daemon.wantedBy = lib.mkIf (cfg.serviceMode == "user") [
+      "default.target"
+    ];
+    systemd.user.services.lianli-session.wantedBy = [ "default.target" ];
+
+    boot.extraModulePackages = lib.mkIf cfg.evdi.enable [ config.boot.kernelPackages.evdi ];
+    boot.kernelModules = lib.mkIf cfg.evdi.enable [ "evdi" ];
   };
 }

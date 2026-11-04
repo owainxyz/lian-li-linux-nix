@@ -3,19 +3,30 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-  outputs = { self, nixpkgs }:
+  outputs =
+    { self, nixpkgs }:
     let
-      system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
     in
     {
-      packages.${system} = {
-        lian-li-linux = pkgs.callPackage ./lian-li-linux {
-          evdi = pkgs.linuxPackages.evdi;
-        };
-        default = self.packages.${system}.lian-li-linux;
+      packages = forAllSystems (pkgs: {
+        lian-li-linux = pkgs.callPackage ./lian-li-linux { };
+        default = self.packages.${pkgs.stdenv.hostPlatform.system}.lian-li-linux;
+      });
+
+      overlays.default = final: _: {
+        lian-li-linux = final.callPackage ./lian-li-linux { };
       };
 
-      nixosModules.default = import ./module.nix;
+      nixosModules.default = {
+        imports = [ ./module.nix ];
+        nixpkgs.overlays = [ self.overlays.default ];
+      };
+
+      formatter = forAllSystems (pkgs: pkgs.nixfmt);
     };
 }

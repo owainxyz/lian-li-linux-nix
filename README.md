@@ -1,54 +1,66 @@
 # Lian Li Linux! .. but for Nix?
 
-Unofficial NixOS packaging for [sgtaziz/lian-li-linux](https://github.com/sgtaziz/lian-li-linux), the open-source Linux replacement for Lian Li's L-Connect 3. It puts fan control, RGB, and LCD/screen streaming for Lian Li hardware into your NixOS config, instead of installed by hand.
+Unofficial NixOS packaging for [sgtaziz/lian-li-linux](https://github.com/sgtaziz/lian-li-linux), the open-source Linux replacement for Lian Li's L-Connect 3. Fan control, RGB and LCD streaming for Lian Li hardware, set up from your NixOS config.
+
+Packages upstream **1.2.4** (Tauri GUI). The same packaging is proposed upstream in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274); once that's merged you can point at upstream's flake directly.
 
 ## What's in here
 
-- **`lian-li-linux/default.nix`**: a `buildRustPackage` derivation for `lianli-daemon` and `lianli-gui`. It pulls in a Rust toolchain new enough for Slint, vendors Slint's git dependency, and patches the rpath of libraries the app `dlopen()`s at runtime instead of linking normally (`libxkbcommon-x11`, `libevdi.so.1`, assorted GL/Wayland/X11 libs). Upstream's own build doesn't handle any of that.
-- **`module.nix`**: a NixOS module that installs the package, loads the `evdi` kernel module for desktop-mode LCD panels, and runs the daemon as a `systemd --user` service. It also rewrites the upstream udev rules to use Nix store paths instead of `/bin/sh` and `/bin/chmod`, since those paths don't exist on NixOS.
+- **`lian-li-linux/package.nix`**: builds `lianli-daemon`, `lianli-gui`, `lianli-control` and `lianli-session`, including the Vue frontend offline. Hardcoded `/usr/bin` paths (`systemctl`, `systemd-run`, `busctl`, `pkexec`, the project's own binaries) are patched to store paths, `ffmpeg` is put on `PATH`, and `libevdi` plus GL/GBM are added to the runpath.
+- **`lian-li-linux/default.nix`**: pins the upstream commit and applies `package-lock.patch`, which fills in npm lockfile entries upstream is missing so the frontend builds in the sandbox.
+- **`module.nix`**: NixOS module. Installs upstream's udev rules, user and system units, Polkit rule, tmpfiles locks and the `lianli` system account, and optionally loads `evdi`.
 
-## Setup guide
+## Setup
 
-### Quick install (just the binaries)
+### NixOS module (recommended)
+
+```nix
+{
+  inputs.lian-li-linux-nix.url = "github:owainxyz/lian-li-linux-nix";
+
+  outputs = { nixpkgs, lian-li-linux-nix, ... }: {
+    nixosConfigurations.my-host = nixpkgs.lib.nixosSystem {
+      modules = [
+        lian-li-linux-nix.nixosModules.default
+        {
+          services.lian-li-linux = {
+            enable = true;
+            serviceMode = "user";
+            evdi.enable = true;
+          };
+        }
+      ];
+    };
+  };
+}
+```
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `enable` | `false` | Package, udev rules, units, Polkit rule, tmpfiles and `lianli` account |
+| `serviceMode` | `null` | `"user"` (login session) or `"system"` (boot, as `lianli`) starts that daemon. `null` leaves both stopped so you pick in the GUI |
+| `evdi.enable` | `false` | Load the `evdi` kernel module for desktop-mode LCD panels |
+| `package` | this flake | Override the package |
+
+Rebuild with `sudo nixos-rebuild switch`, then log out and back in so `uaccess` applies to the USB devices.
+
+### Just the binaries
 
 ```sh
 nix profile add github:owainxyz/lian-li-linux-nix
 ```
 
-Gets you `lianli-daemon` and `lianli-gui` on `PATH`. You still need the udev rules and the `evdi` kernel module for full hardware access, which only the NixOS module sets up.
+No udev rules or lock files this way, so the daemon won't start or reach devices without the module.
 
-### Full NixOS integration
+### Upgrading from 0.6.x
 
-1. Clone this repo into your home directory:
+The module was rewritten for 1.x. The old unconditional import is now `services.lian-li-linux.enable = true`, and the user service comes from upstream's unit instead of one defined here. `lian-li-linux/99-lianli.rules` is gone, the rules come from upstream.
 
-   ```sh
-   git clone https://github.com/owainxyz/lian-li-linux-nix.git ~/lian-li-linux-nix
-   ```
-
-2. Import the module in `configuration.nix` with an absolute path. Nix doesn't care where the file lives:
-
-   ```nix
-   { config, pkgs, ... }:
-   {
-     imports = [
-       /home/user/lian-li-linux-nix/module.nix
-     ];
-   }
-   ```
-
-3. Rebuild and switch:
-
-   ```sh
-   sudo nixos-rebuild switch
-   ```
-
-4. Log out and back in, or run `systemctl --user start lianli-daemon`. The daemon runs as a user service from then on. Launch `lianli-gui` from your app menu or a terminal to control fans, RGB, and LCD panels.
-
-If a device doesn't show up, check that it's covered by `lian-li-linux/99-lianli.rules`, and that you've replugged it (or rebooted) since the udev rules landed. The rules only apply permissions to devices plugged in *after* that.
+If an LCD stays blank after upgrading with a `generated frame ... exceeds LCD payload limit` warning, lower the image quality or pick the media again in the GUI.
 
 ## Supported hardware
 
-Whatever upstream's udev rules cover. Full VID:PID list in `lian-li-linux/99-lianli.rules`.
+Whatever upstream's udev rules cover. Full VID:PID list in upstream's [`packaging/udev/60-lianli.rules`](https://github.com/sgtaziz/lian-li-linux/blob/main/packaging/udev/60-lianli.rules).
 
 ### HID
 
@@ -94,10 +106,9 @@ Wireless devices with an LCD still need a USB connection for the screen. The don
 
 ## Notes
 
-- Not affiliated with Lian Li or the upstream `lian-li-linux` project. This is just a Nix packaging of it.
-- Pulls a `nixos-unstable` Rust toolchain via a pinned `fetchTarball`, since stable nixpkgs' `rustc` is too old to build Slint 1.16. Everything else (system libraries, glibc) stays on your regular channel.
-- LCD/screen streaming shells out to `ffmpeg` for H.264 encoding. The package wraps `lianli-daemon` and `lianli-gui` so `ffmpeg` is always on `PATH` for them, regardless of what's installed system-wide.
-- File pickers (uploading an image to an LCD panel) go through the XDG desktop portal. On non-GNOME/KDE window managers, you need a portal backend installed and routed to it, e.g.:
+- Not affiliated with Lian Li. This is just Nix packaging of upstream.
+- Builds with the regular `nixos-unstable` Rust toolchain, no pinned tarball needed anymore.
+- File pickers go through the XDG desktop portal. On non-GNOME/KDE window managers, install a portal backend, e.g.:
 
   ```nix
   xdg.portal.enable = true;
