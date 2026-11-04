@@ -20,12 +20,12 @@ Packages upstream **1.2.4** (Tauri GUI). The same packaging is proposed upstream
 
   outputs = { nixpkgs, lian-li-linux-nix, ... }: {
     nixosConfigurations.my-host = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
       modules = [
         lian-li-linux-nix.nixosModules.default
         {
           services.lian-li-linux = {
             enable = true;
-            serviceMode = "user";
             evdi.enable = true;
           };
         }
@@ -38,11 +38,11 @@ Packages upstream **1.2.4** (Tauri GUI). The same packaging is proposed upstream
 | Option | Default | Description |
 | --- | --- | --- |
 | `enable` | `false` | Package, udev rules, units, Polkit rule, tmpfiles and `lianli` account |
-| `serviceMode` | `null` | `"user"` (login session) or `"system"` (boot, as `lianli`) starts that daemon. `null` leaves both stopped so you pick in the GUI |
+| `systemService.enable` | `false` | Run the system daemon at boot as `lianli`. Leave off to pick user mode in the GUI |
 | `evdi.enable` | `false` | Load the `evdi` kernel module for desktop-mode LCD panels |
 | `package` | this flake | Override the package |
 
-Rebuild with `sudo nixos-rebuild switch`, then log out and back in so `uaccess` applies to the USB devices.
+Rebuild with `sudo nixos-rebuild switch`, then log out and back in so `uaccess` applies to the USB devices. Pick **User (at login)** in the GUI on first launch. NixOS keeps `/etc/systemd` read-only, so system mode can only be set with `systemService.enable`, not from the GUI.
 
 ### Just the binaries
 
