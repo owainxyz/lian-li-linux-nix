@@ -14,6 +14,9 @@ callPackage ./package.nix {
       fetchSubmodules = true;
       hash = "sha256-DcxjUs0d9auuaiRzJkDNVeh3XX2XCQ/GV99k5X1y+CQ=";
     };
-    patches = [ ./package-lock.patch ];
+    patches = [
+      ./package-lock.patch
+      ./jpeg-payload.patch
+    ];
   };
 }
