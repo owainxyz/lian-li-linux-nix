@@ -10,13 +10,10 @@ callPackage ./package.nix {
     src = fetchFromGitHub {
       owner = "sgtaziz";
       repo = "lian-li-linux";
-      rev = "896593b3b84f0d9225471222a319c4c95144c635";
+      rev = "2172973cb68de0244032507666e844be55112c6d";
       fetchSubmodules = true;
-      hash = "sha256-DcxjUs0d9auuaiRzJkDNVeh3XX2XCQ/GV99k5X1y+CQ=";
+      hash = "sha256-Ll18+qRGAGaJhsNczTiULbO7DoRqBsoTWi9VjZgU7oM=";
     };
-    patches = [
-      ./package-lock.patch
-      ./jpeg-payload.patch
-    ];
+    patches = [ ./jpeg-payload.patch ];
   };
 }

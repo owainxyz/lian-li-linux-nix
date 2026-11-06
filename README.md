@@ -2,12 +2,12 @@
 
 Unofficial NixOS packaging for [sgtaziz/lian-li-linux](https://github.com/sgtaziz/lian-li-linux), the open-source Linux replacement for Lian Li's L-Connect 3. Fan control, RGB and LCD streaming for Lian Li hardware, set up from your NixOS config.
 
-Packages upstream **1.2.4** (Tauri GUI). The same packaging is proposed upstream in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274); once that's merged you can point at upstream's flake directly.
+Packages upstream **1.2.5** (Tauri GUI). This packaging was merged upstream in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274), so `github:sgtaziz/lian-li-linux` works directly too. This repo adds a patch that lowers JPEG quality until LCD frames fit the payload limit, so detailed photos don't fail on the Universal Screen 8.8".
 
 ## What's in here
 
 - **`lian-li-linux/package.nix`**: builds `lianli-daemon`, `lianli-gui`, `lianli-control` and `lianli-session`, including the Vue frontend offline. Hardcoded `/usr/bin` paths (`systemctl`, `systemd-run`, `busctl`, `pkexec`, the project's own binaries) are patched to store paths, `ffmpeg` is put on `PATH`, and `libevdi` plus GL/GBM are added to the runpath.
-- **`lian-li-linux/default.nix`**: pins the upstream commit and applies `package-lock.patch`, which fills in npm lockfile entries upstream is missing so the frontend builds in the sandbox.
+- **`lian-li-linux/default.nix`**: pins the upstream commit and applies `jpeg-payload.patch`.
 - **`module.nix`**: NixOS module. Installs upstream's udev rules, user and system units, Polkit rule, tmpfiles locks and the `lianli` system account, and optionally loads `evdi`.
 
 ## Setup
