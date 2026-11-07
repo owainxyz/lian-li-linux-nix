@@ -1,10 +1,12 @@
-# Lian Li Linux! .. but for Nix?
+# lian-li-linux-nix
 
 Unofficial NixOS packaging for [sgtaziz/lian-li-linux](https://github.com/sgtaziz/lian-li-linux), the open-source Linux replacement for Lian Li's L-Connect 3. Fan control, RGB and LCD streaming for Lian Li hardware, set up from your NixOS config.
 
-Packages upstream **1.2.5** (Tauri GUI). This packaging was merged upstream in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274), so `github:sgtaziz/lian-li-linux` works directly too. This repo adds a patch that lowers JPEG quality until LCD frames fit the payload limit, so detailed photos don't fail on the Universal Screen 8.8".
+Packages upstream **1.2.5**. This packaging was contributed upstream in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274) and ships with lian-li-linux 1.2.5, so most users should use `github:sgtaziz/lian-li-linux` directly.
 
-## What's in here
+This repository additionally applies the fix from [sgtaziz/lian-li-linux#280](https://github.com/sgtaziz/lian-li-linux/pull/280), which lowers JPEG quality until LCD frames fit the device payload limit. Without it, detailed images can fail to display on the Universal Screen 8.8".
+
+## Contents
 
 - **`lian-li-linux/package.nix`**: builds `lianli-daemon`, `lianli-gui`, `lianli-control` and `lianli-session`, including the Vue frontend offline. Hardcoded `/usr/bin` paths (`systemctl`, `systemd-run`, `busctl`, `pkexec`, the project's own binaries) are patched to store paths, `ffmpeg` is put on `PATH`, and `libevdi` plus GL/GBM are added to the runpath.
 - **`lian-li-linux/default.nix`**: pins the upstream commit and applies `jpeg-payload.patch`.
@@ -44,13 +46,13 @@ Packages upstream **1.2.5** (Tauri GUI). This packaging was merged upstream in [
 
 Rebuild with `sudo nixos-rebuild switch`, then log out and back in so `uaccess` applies to the USB devices. Pick **User (at login)** in the GUI on first launch. NixOS keeps `/etc/systemd` read-only, so system mode can only be set with `systemService.enable`, not from the GUI.
 
-### Just the binaries
+### Package only
 
 ```sh
 nix profile add github:owainxyz/lian-li-linux-nix
 ```
 
-No udev rules or lock files this way, so the daemon won't start or reach devices without the module.
+This installs the binaries only. Without the module's udev rules and lock files, the daemon cannot start or access devices.
 
 ### Upgrading from 0.6.x
 
@@ -106,8 +108,8 @@ Wireless devices with an LCD still need a USB connection for the screen. The don
 
 ## Notes
 
-- Not affiliated with Lian Li. This is just Nix packaging of upstream.
-- Builds with the regular `nixos-unstable` Rust toolchain, no pinned tarball needed anymore.
+- Not affiliated with Lian Li Industrial Co., Ltd. This repository only provides Nix packaging for upstream.
+- Builds with the standard `nixos-unstable` Rust toolchain.
 - File pickers go through the XDG desktop portal. On non-GNOME/KDE window managers, install a portal backend, e.g.:
 
   ```nix
@@ -116,4 +118,4 @@ Wireless devices with an LCD still need a USB connection for the screen. The don
   xdg.portal.config.common.default = [ "gtk" ];
   ```
 
-- MIT licensed, same as upstream.
+- Licensed under the [MIT License](LICENSE), matching upstream.
