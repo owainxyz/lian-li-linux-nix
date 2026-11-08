@@ -3,7 +3,7 @@
 Unofficial NixOS packaging for [sgtaziz/lian-li-linux](https://github.com/sgtaziz/lian-li-linux), the open-source Linux replacement for Lian Li's L-Connect 3. Fan control, RGB and LCD streaming for Lian Li hardware, set up from your NixOS config.
 
 > [!NOTE]
-> This repository is archived. Both parts were merged into upstream: the flake and NixOS module in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274) (released in 1.2.5) and the LCD JPEG fix in [sgtaziz/lian-li-linux#280](https://github.com/sgtaziz/lian-li-linux/pull/280). Use `github:sgtaziz/lian-li-linux` instead; see the [NixOS guide](https://github.com/sgtaziz/lian-li-linux/blob/main/docs/nixos.md).
+> This repository is archived. Both parts were merged into upstream: the flake and NixOS module in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274) (released in 1.2.5) and the LCD JPEG fix in [sgtaziz/lian-li-linux#280](https://github.com/sgtaziz/lian-li-linux/pull/280). Use `git+https://github.com/sgtaziz/lian-li-linux` instead (the `git+https` form is needed so Nix fetches its submodules); see the [NixOS guide](https://github.com/sgtaziz/lian-li-linux/blob/main/docs/nixos.md).
 
 ## Contents
 
