@@ -2,9 +2,8 @@
 
 Unofficial NixOS packaging for [sgtaziz/lian-li-linux](https://github.com/sgtaziz/lian-li-linux), the open-source Linux replacement for Lian Li's L-Connect 3. Fan control, RGB and LCD streaming for Lian Li hardware, set up from your NixOS config.
 
-Packages upstream **1.2.5**. This packaging was contributed upstream in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274) and ships with lian-li-linux 1.2.5, so most users should use `github:sgtaziz/lian-li-linux` directly.
-
-This repository additionally applies the fix from [sgtaziz/lian-li-linux#280](https://github.com/sgtaziz/lian-li-linux/pull/280), which lowers JPEG quality until LCD frames fit the device payload limit. Without it, detailed images can fail to display on the Universal Screen 8.8".
+> [!NOTE]
+> This repository is archived. Both parts were merged into upstream: the flake and NixOS module in [sgtaziz/lian-li-linux#274](https://github.com/sgtaziz/lian-li-linux/pull/274) (released in 1.2.5) and the LCD JPEG fix in [sgtaziz/lian-li-linux#280](https://github.com/sgtaziz/lian-li-linux/pull/280). Use `github:sgtaziz/lian-li-linux` instead; see the [NixOS guide](https://github.com/sgtaziz/lian-li-linux/blob/main/docs/nixos.md).
 
 ## Contents
 
